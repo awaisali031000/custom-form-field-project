@@ -1,0 +1,169 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-dark">
+  <a class="navbar-brand" style="color: white" href="#">Add Custom Fields</a>
+</nav>
+
+<div *ngIf="showSuccessMessage" class="success-message">
+  Success! Your form has been submitted.
+</div>
+
+<ng-template #content let-offcanvas>
+  <div *ngIf="showItemSuccessMessage" class="success-message">
+    Success! You have moved the Item.
+  </div>
+	<div class="offcanvas-header">
+		<h4 class="offcanvas-title">Create Form</h4>
+		<button type="button" class="btn-close" aria-label="Close" (click)="closeEnd()"></button>
+	</div>
+	<div class="offcanvas-body">
+		<div class="container">
+      <h3 *ngIf="customForm.get('formName')?.value" class="mb-3">
+        {{ customForm.get("formName")?.value }}
+      </h3>
+    
+      <div *ngIf="!customForm.get('formName')?.value">
+        <button type="button" class="btn btn-info btn-lg" (click)="openFormNameModal()">
+          Add Form Name
+        </button>
+      </div>
+    
+      <div *ngIf="customForm.get('formName')?.value">
+        <form [formGroup]="customForm" (ngSubmit)="onSubmit()">
+          <div formArrayName="customFields" cdkDropList (cdkDropListDropped)="onFieldDrop($event)">
+            <div *ngFor="let field of customFields.controls; let i = index" cdkDrag>
+              <div class="form-group" *ngIf="formFields[i].type === 'text'">
+                <label>{{ formFields[i].label }}</label>
+                <input class="form-control" [formControl]="getFieldControl(i)" [(ngModel)]="formFields[i].data" />
+              </div>
+    
+              <div class="form-group" *ngIf="formFields[i].type === 'date'">
+                <label>{{ formFields[i].label }}</label>
+                <input class="form-control" [formControl]="getFieldControl(i)" type="date" [(ngModel)]="formFields[i].data" />
+              </div>
+              
+              <div class="form-group" *ngIf="formFields[i].type === 'dropdown'">
+                <label>{{ formFields[i].label }}</label>
+                <select class="form-control" [formControl]="getFieldControl(i)">
+                  <option *ngFor="let option of formFields[i]?.options; let optionIndex = index" [value]="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </div>
+              
+              <div class="form-group" *ngIf="formFields[i].type === 'choice'">
+                <label>{{ formFields[i].label }}</label>
+                <div class="form-check" *ngFor="let option of formFields[i]?.options; let j = index;">
+                  <input type="radio" class="form-check-input" [formControl]="getFieldControl(i)" [value]="option" />
+                  <label class="form-check-label">{{ option }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+    
+          <div *ngIf="formFields.length > 0">
+            <button type="submit" [disabled]="!customForm.valid" class="btn btn-primary">
+              Submit
+            </button>
+          </div>
+        </form>
+    
+        <div class="mt-4">
+          <button type="button" class="btn btn-info btn-lg" (click)="openItemModal()">
+            Add Item
+          </button>
+        </div>
+      </div>
+    </div>
+	</div>
+</ng-template>
+
+<button class="btn btn-lg btn-outline-primary mb-2 me-2 m-4" (click)="openFormCreationModal()">Create New Form</button>
+
+<div style="max-width: 2200px; margin: 0 auto;">
+  <div style="width: 100%;">
+    <ag-grid-angular 
+      style="width: 100%; height: 270px;"
+      class="ag-theme-alpine"
+      [rowData]="rowData$"
+      [columnDefs]="columnDefs"
+      [gridOptions]="gridOptions"
+      [defaultColDef]="defaultColDef"
+      [rowSelection]="'multiple'"
+      (gridReady)="onGridReady($event)"
+      (firstDataRendered)="onFirstDataRendered($event)"
+      [pagination]="true"
+      [animateRows]="true"
+    ></ag-grid-angular>
+  </div>
+</div>
+
+
+<div class="modal" tabindex="-1" role="dialog" [ngStyle]="{ display: formNameDisplay }">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Add Form Name</h4>
+        <button type="button" class="close" aria-label="Close" (click)="onCloseFormNameModal()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="formNameForm" (ngSubmit)="addFormName()">
+          <div class="form-group">
+            <label>Form Name</label>
+            <input class="form-control" formControlName="formName" placeholder="Enter Form Name" />
+          </div>
+          <button type="submit" [disabled]="!formNameForm.valid" class="btn btn-primary">
+            Add Form Name
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" tabindex="-1" role="dialog" [ngStyle]="{ display: display }">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Add Custom Field</h4>
+        <button type="button" class="close" aria-label="Close" (click)="onCloseHandled()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="customFieldForm" (ngSubmit)="addCustomField()">
+          <div class="form-group">
+            <label>Field Type</label>
+            <select class="form-control" formControlName="type">
+              <option value="" disabled>Select Field Type</option>
+              <option value="text">Text</option>
+              <option value="date">Date</option>
+              <option value="dropdown">Dropdown</option>
+              <option value="choice">Radio Button</option>
+            </select>
+            <div *ngIf="customFieldForm.get('type')?.invalid && customFieldForm.get('type')?.touched" class="text-danger">
+              Please select a valid type.
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Label</label>
+            <input class="form-control" formControlName="label" placeholder="Enter Label" />
+            <div *ngIf="customFieldForm.get('label')?.invalid && customFieldForm.get('label')?.touched" class="text-danger">
+              Please enter a valid label.
+            </div>
+          </div>
+          <div class="form-group" *ngIf="isDropdownOrChoice()">
+            <label>Options (comma-separated)</label>
+            <input class="form-control" formControlName="options" placeholder="Option 1, Option 2, Option 3" />
+            <div *ngIf="customFieldForm.hasError('commaSeparated') && customFieldForm.touched" class="text-danger">
+              Please enter valid comma-separated options.
+            </div>
+          </div>
+          <button type="submit" [disabled]="customFieldForm.get('label')?.invalid" class="btn btn-primary">
+            Add Field
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

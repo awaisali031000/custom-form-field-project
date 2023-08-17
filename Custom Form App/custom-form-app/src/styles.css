@@ -1,0 +1,15 @@
+/* You can add global styles to this file, and also import other style files */
+@import "~ag-grid-community/styles/ag-grid.css";
+@import "~ag-grid-community/styles/ag-theme-alpine.css";
+
+.ag-theme-alpine .ag-body .ag-row .ag-cell:nth-child(1) {
+    /* Add your styling properties here */
+    text-align: center;
+    background-color: #f2f2f2;
+    color: #333;
+    width: 100%;
+  }
+
+.ag-header-cell-text{
+    margin-left: 555px;
+  }
